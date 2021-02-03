@@ -1,9 +1,13 @@
 from RuleSystem import If, And, Or, Statement
 
+"""
+Class responsible for taking all rules and performing check if user conditions meet all requirements of any rule
+"""
 class RuleManager(object):
     def __init__(self, listOfRules):
         self.rulesList = listOfRules
         
+    #   return answer basing on user conditions matching any of the available rules.
     def give_best_match(self, userConditions):
         response = None
         
@@ -16,4 +20,4 @@ class RuleManager(object):
             if response != "no match":
                 return response
             
-        return "no match found"
+        return "no match"

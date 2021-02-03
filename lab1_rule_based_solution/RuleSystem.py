@@ -1,24 +1,30 @@
+"""
+Parent class with basic methods, fields and abstract method that must be implemented by children
+"""
 class Statement(object):
+    #   create object of the class
     def __init__(self):
         self.statementsList = []
         self.response = None
         
+    #   set response field and return object
     def then(self, statement):
         self.response = statement
         return self
         
+    #   abstract method that must be implemented by child
     def conditions_matching(self):
         raise NotImplementedError("Please Implement this method")
      
 """
-    Logical class IF that contains logic of how to check match of user condition with simple
-one-statement rule
+Logical IF class that contains one-statement-rule principle of work (WAS NOT TESTED, USE WITH CAUTION)
 """   
 class If(Statement):
     def __init__(self, condition):
         super().__init__()
         self.statementsList.append(condition)
-        
+      
+    #   function checks if user characteristics meet statement of the rule  
     def conditions_matching(self, userConditions):
         for userCondition in userConditions:
             if userCondition == self.statementsList[0]:
@@ -26,6 +32,7 @@ class If(Statement):
             
         return False
     
+    #   give response basing on user characteristics and matching to the rule
     def give_response(self, userConditions):
         if self.conditions_matching(userConditions):
             return self.response
@@ -33,8 +40,7 @@ class If(Statement):
             return "no match"
   
 """
-    Logical class AND that contains logic of how to handle matching of user conditions with
-statements
+Logical AND class that contains multi-statement-rule with possible inner OR-rules (this class was mainly used in work)
 """      
 class And(Statement):
     def __init__(self, conditions):
@@ -42,23 +48,24 @@ class And(Statement):
         for condition in conditions:
             self.statementsList.append(condition)
         
+    #   function checks is user characteristics meet statements of the rule
     def conditions_matching(self, userConditions):
         #   shows how many matchings to rule statements are found
         matching_value = 0
         
-        #   check all conditions from user to have matches with rule statements
+        #   check if there is list of user characteristics or only one user characteristic
         if isinstance(userConditions, list):
+            
+            #   come through all charactestics from user and all statements of rule
             for userCondition in userConditions:
                 for statement in self.statementsList:
                     
-                    #   in case if there is an inner OR perform check conform OR logical algorithm
+                    #   if statement is an inner OR-rule then perform check
                     if isinstance(statement, Or):
-                        
-                        #   if user condition meets OR requirements then increment matching by one
                         if statement.conditions_matching(userCondition):
                             matching_value += 1
                     
-                    #   is user condition is matching rule statement then increment matching value
+                    #   increment matching value if statement meets user condition
                     if userCondition == statement:
                         matching_value += 1
                         
@@ -66,7 +73,11 @@ class And(Statement):
             statementsAmount = len(self.statementsList)
             if matching_value == statementsAmount:
                 return True
+        
+        #   else if there is only one user characteristic
         else:
+            
+            #   come through all statements
             for statement in self.statementsList:
                 if isinstance(statement, Or):
                     if statement.conditions_matching(userConditions):
@@ -82,6 +93,7 @@ class And(Statement):
             
         return False
     
+    #   give response basing on meeting statements
     def give_response(self, userConditions):
         if self.conditions_matching(userConditions):
             return self.response
@@ -89,49 +101,46 @@ class And(Statement):
             return "no match"
                             
 """
-    Logical class OR that contains logic of how to handle matching of user conditions with
-statements
+Logical OR class with multi-statement-rule principle of work, where user conditions must meet even one statement to match all rule
 """
 class Or(Statement):
     def __init__(self, conditions):
         super().__init__()
         for condition in conditions:
             self.statementsList.append(condition)
-        
+       
+    #   check how user conditions match all statements of rule 
     def conditions_matching(self, userConditions):
         
-        #   iterate through all user conditions and all rule statements
+        #   check if there is a list of user conditions
         if isinstance(userConditions, list):
+            
+            #   iterate through all statements and user conditions
             for userCondition in userConditions:
                 for statement in self.statementsList:
                     
-                    #   check if there is inner AND statement
+                    #   check if there is inner AND rule and check matching this rule
                     if isinstance(statement, And):
-                        
-                        #   if user conditions match AND statement
                         if statement.conditions_matching(userConditions):
                             return True
                     
-                    #   if user condition match any of statements
+                    #   if user condition matches any of statements
                     if userCondition == statement:
                         return True
-                            
+        
+        #   check if one user characteristic is meeting even one statement                   
         else:
             for statement in self.statementsList:
-                    
-                #   check if there is inner AND statement
                 if isinstance(statement, And):
-                    
-                    #   if user conditions match AND statement
                     if statement.conditions_matching(userConditions):
                         return True
                 
-                #   if user condition match any of statements
                 if userConditions == statement:
                     return True
         
         return False
     
+    #   give response basing on matching result
     def give_response(self, userConditions):
         if self.conditions_matching(userConditions):
             return self.response
