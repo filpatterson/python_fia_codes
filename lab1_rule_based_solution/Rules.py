@@ -37,3 +37,35 @@ print("Possible mandalorian was considered by system as ", ruleManager.give_best
 print("Possible jedi was considered by system as ", ruleManager.give_best_match(possibleJediConditions))
 print("Possible tatooiner was considered by system as ", ruleManager.give_best_match(possibleTatooinerConditions))
 print("Possible loonie was considered by system as ", ruleManager.give_best_match(possibleLoonieConditions))
+
+print("\tIf you want to check program, then type in your conditions and then program will give response basing on your input and rules defined by experts.")
+print("\tType your condition (if there is no new condition, then type 'none')")
+answer = None
+userConditions = []
+while True:
+    answer = input(">>>\t")
+    if answer == "none" or answer == "no more":
+        if len(userConditions) == 0:
+            print("\tWell, there is no condition from you, I can't even try to guess who this can be ¯\_(ツ)_/¯")
+            answer = None
+            continue
+        expertAnswer = ruleManager.give_best_match(userConditions)
+        if expertAnswer == "no match":
+            print("\tThere is no person with such characterstics, maybe there is an error in characteristics?")
+            print("\tMaybe this type of person even can be not introduced in system DB ¯\_(ツ)_/¯")
+            answer = None
+            userConditions = []
+            continue
+        print("person with conditions that you typed is ", expertAnswer)
+        userConditions = []
+        answer = None
+        
+    if answer == "stop program":
+        print("\tOk, thanks for using this... code ( ᷇⁰ ͜U ᷇⁰ )")
+        answer = None
+        userConditions = None
+        break
+    
+    userConditions.append(answer)
+    answer = None
+    
