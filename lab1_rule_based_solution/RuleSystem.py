@@ -39,31 +39,47 @@ statements
 class And(Statement):
     def __init__(self, conditions):
         super().__init__()
-        self.statementsList.append(conditions)
+        for condition in conditions:
+            self.statementsList.append(condition)
         
     def conditions_matching(self, userConditions):
         #   shows how many matchings to rule statements are found
         matching_value = 0
         
         #   check all conditions from user to have matches with rule statements
-        for userCondition in userConditions:
-            for statement in self.statementsList:
-                
-                #   in case if there is an inner OR perform check conform OR logical algorithm
-                if isinstance(statement, Or):
+        if isinstance(userConditions, list):
+            for userCondition in userConditions:
+                for statement in self.statementsList:
                     
-                    #   if user condition meets OR requirements then increment matching by one
-                    if statement.conditions_matching(userCondition):
+                    #   in case if there is an inner OR perform check conform OR logical algorithm
+                    if isinstance(statement, Or):
+                        
+                        #   if user condition meets OR requirements then increment matching by one
+                        if statement.conditions_matching(userCondition):
+                            matching_value += 1
+                    
+                    #   is user condition is matching rule statement then increment matching value
+                    if userCondition == statement:
                         matching_value += 1
-                
-                #   is user condition is matching rule statement then increment matching value
-                if userCondition == statement:
-                    matching_value += 1
+                        
+            #   check if all rule statements have been matched
+            statementsAmount = len(self.statementsList)
+            if matching_value == statementsAmount:
+                return True
+        else:
+            for statement in self.statementsList:
+                if isinstance(statement, Or):
+                    if statement.conditions_matching(userConditions):
+                        matching_value += 1
                     
-        #   check if all rule statements have been matched
-        if matching_value == len(self.statementsList):
-            return True
-        
+                    if userConditions == statement:
+                        matching_value += 1
+            
+            #   check if all rule statements have been matched
+            statementsAmount = len(self.statementsList)
+            if matching_value == statementsAmount:
+                return True
+            
         return False
     
     def give_response(self, userConditions):
@@ -79,14 +95,30 @@ statements
 class Or(Statement):
     def __init__(self, conditions):
         super().__init__()
-        self.statementsList.append(conditions)
+        for condition in conditions:
+            self.statementsList.append(condition)
         
     def conditions_matching(self, userConditions):
         
         #   iterate through all user conditions and all rule statements
-        for userCondition in userConditions:
+        if isinstance(userConditions, list):
+            for userCondition in userConditions:
+                for statement in self.statementsList:
+                    
+                    #   check if there is inner AND statement
+                    if isinstance(statement, And):
+                        
+                        #   if user conditions match AND statement
+                        if statement.conditions_matching(userConditions):
+                            return True
+                    
+                    #   if user condition match any of statements
+                    if userCondition == statement:
+                        return True
+                            
+        else:
             for statement in self.statementsList:
-                
+                    
                 #   check if there is inner AND statement
                 if isinstance(statement, And):
                     
@@ -95,9 +127,9 @@ class Or(Statement):
                         return True
                 
                 #   if user condition match any of statements
-                if userCondition == statement:
+                if userConditions == statement:
                     return True
-                
+        
         return False
     
     def give_response(self, userConditions):

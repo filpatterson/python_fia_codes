@@ -4,7 +4,7 @@ class RuleManager(object):
     def __init__(self, listOfRules):
         self.rulesList = listOfRules
         
-    def give_best_match(self, *userConditions):
+    def give_best_match(self, userConditions):
         response = None
         
         for rule in self.rulesList:
