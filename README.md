@@ -3,6 +3,10 @@
 Hello, my name is Dumitru Cretu, I am a student of Technical University of Moldova, group FAF-172. This repo is a storage of my laboratory works for FIA. This repo will be updated over the time with new laboratory works and their realization information in the document. All code for laboratory works was written using Python 3.
  
 # Table of contents
+
+- [Laboratory work nr. 1](#laboratory-work-nr-1)
+  * [OOP-based problem solution](#oop-based-problem-solution)
+  * [Rule-based expert system](#rule-based-expert-system)
  
 # Laboratory work nr. 1
  
