@@ -477,3 +477,274 @@ while True:
 
 ## Rule-based expert system (akinator prototype)
 
+The second implementation, despite the advantage over the first, has a disadvantage: it assumes that the user enters conditions on his own and the answer is determined based on them. It is more efficient for the user to answer the minimum set of questions to determine the answer to save time and system resources for processing all user conditions (there can be many of them). To accurately determine the answer, it was also necessary to enter the entire set of conditions, which is inconvenient for the user.
+
+It was decided to create a third implementation with increased efficiency and minimized response time. This solution was inspired by the structure of the akinator programs.
+
+The akinator program asks multiple-choice questions (yes, no, don’t know - the set of questions depends on the system), which are interpreted by the system to filter potential answers. The program gives an answer as soon as the number of answers is reduced to one.
+
+Generation of questions based on conditions is carried out in several formats (the basis is the presence of an algorithm for discarding the conditions of violated rules):
+
+* Generation of a question based on the frequency of a condition inside the rules that were not violated at the time. This format is convenient when there are many conditions and their intersections. The disadvantage of this approach is a large number of questions if the required answer is atypical (in the context of tourists, the program can ask many questions leading to incorrect answers before it gets to the right ones)
+* Generation of a question based on a random selection from unbroken rules. In a worst-case scenario, it can ask as many questions as possible leading to incorrect answers before getting to the correct ones. Will mostly give the average sample time.
+* Generation of a question depending on the "weight" of the condition. This approach is already closer to the field of artificial intelligence, since "weight" can be determined in several ways.
+  * "Weight" is set by an expert or predefined. Non-adaptive option, requires significant analysis by a person or other system.
+  * "Weight" is set on the basis of previously given answers, the coefficient of the effectiveness of the answer to the question for filtering answers.
+
+The first and second methods are provided for the system. The first option was also modified to generate a question based on the last answer (the most frequent condition will be displayed according to the last answer). The implementation of the latter method would be maladaptive under the first subparagraph or too complex to implement under the second subparagraph.
+
+### Changes comparing to the rule-based expert-like system
+
+To begin with, the constructor of the manager is changed, since now the program will store two additional constructions: a dictionary of conditions with the corresponding answers and a list of answers available at this iteration. The constructor sets all conditions and answers to the dictionary in accordance with the rules, and sets the list of answers based on all the answers in the rules.
+
+```python
+    def __init__(self, listOfRules):
+        self.rulesList = listOfRules
+        self.conditionSolutionDictionary = dict()
+        self.possibleAnswers = []
+        
+        #   get all conditions and answers from rules
+        for rule in self.rulesList:
+            if issubclass(type(rule), Statement):
+                self.set_conditions_with_answer(rule, rule.response)
+                self.possibleAnswers.append(rule.response)
+            else:
+                raise TypeError("Non rule object in database")
+```
+
+A method of "zeroing" the system appears, since the system must update the list of acceptable answers after the procedure is completed and update the data (useful when adding new rules to the system dynamically).
+
+```python
+#   reset system if answer was given or appeared error
+    def reset_system(self):
+        self.possibleAnswers.clear()
+        for rule in self.rulesList:
+            if issubclass(type(rule), Statement):
+                self.set_conditions_with_answer(rule, rule.response)
+                self.possibleAnswers.append(rule.response)
+            else:
+                raise TypeError("Non rule object in database")
+```
+
+For the correct entry of information into the dictionary, a method was needed that allows you to enter new conditions with the corresponding answer or update existing ones by adding new answers, taking into account that the rule may contain sub-rules.
+
+```python
+def set_conditions_with_answer(self, rule, answer):
+        if issubclass(type(rule), Statement):
+            for condition in rule.statementsList:
+                
+                #   if there is an inner rule call function recursively
+                if issubclass(type(condition), Statement):
+                    self.set_conditions_with_answer(condition, answer)
+                #   otherwise, add conditions with answers to the dictionary
+                else:
+                    self.set_element_in_dictionary(self.conditionSolutionDictionary, condition, answer)
+        else:
+            raise TypeError("Non rule object was sent for processing to dictionary")
+```
+
+One of the main functions of this implementation - filtration of potential responses. The system accepts the conditions positively answered by the user and, based on them, filters the set of possible answers, rejecting the answers of the violated rules.
+
+If the system has one answer, then it issues it as its own guess. If there is more than one answer, then the program will return the current set of answers and proceed to the next iteration of filtering.
+
+```python
+#   filter possible answers and conditions basing on user input (here is considered an "yes" answer)
+    def filter_possible_answer(self, condition):
+        currentIterationAnswer = self.conditionSolutionDictionary.get(condition)
+        
+        #   prepare list for current filtration iteration
+        newPossibleAnswers = []
+        if isinstance(currentIterationAnswer, list) and len(currentIterationAnswer) > 0:
+            
+            #   check to which answer from list of available at the current iteration answers current condition
+            # correlates and append it to the list of available answers
+            for innerAnswer in currentIterationAnswer:
+                for possibleAnswer in self.possibleAnswers:
+                    if possibleAnswer == innerAnswer:
+                        if possibleAnswer not in newPossibleAnswers:
+                            newPossibleAnswers.append(possibleAnswer)
+                        
+            #   set available after current iteration answers
+            self.possibleAnswers.clear()
+            self.possibleAnswers = newPossibleAnswers
+            
+            return self.possibleAnswers
+            
+        #   if there is only one answer left            
+        elif type(currentIterationAnswer) == str:
+            self.possibleAnswers.clear()
+            self.possibleAnswers = currentIterationAnswer
+            return currentIterationAnswer
+        
+        #   raise error if there is no such condition
+        else:
+            raise ValueError("There is no such condition in the system")
+```
+
+If the user answers that this condition does not meet, the system will ignore it for the duration of the current search for an answer. It is impossible to remove answers, since a rule can have several variants of the current condition (for the example of personality types: if a personality type can have black or red hair, then when the user answers "he has no red hair", the type cannot be deleted, since there is still a black hair condition ). In addition, the system allows incomplete compliance with the rule, which is only possible with a given implementation of the ignore process.
+
+```python
+    #   remove condition that was not matched
+    def del_incorrect_condition(self, condition):
+        self.conditionSolutionDictionary.pop(condition)
+```
+
+The second important function in the implementation is implemented in two versions.
+
+The first option makes it possible to generate the most frequent condition based on the available rules. Upon completion, the system does not unload the generated condition, which makes it possible to reuse it in the next search.
+
+```python
+   #   pick condition for asking from list of available ones at the current iteration
+    def pick_often_condition_to_ask(self):
+        keysToPickFrom = []
+        
+        #   find available at the current iteration moment conditions
+        for key in list(self.conditionSolutionDictionary.keys()):
+            for possibleAnswer in self.possibleAnswers:
+                if type(self.conditionSolutionDictionary.get(key)) == list:
+                    for conditionAnswer in self.conditionSolutionDictionary.get(key):
+                        if conditionAnswer == possibleAnswer:
+                            keysToPickFrom.append(key)
+                else:
+                    if possibleAnswer == self.conditionSolutionDictionary.get(key):
+                        keysToPickFrom.append(key)
+                        
+        if type(keysToPickFrom) == list and len(keysToPickFrom) == 0:
+            return None
+        
+        
+        #   choose such a condition that is most often met in the available rules
+        theMostPopularKey = None
+        amountOfUsage = 0
+        for key in keysToPickFrom:
+            answersWithCorrespondingCondition = self.conditionSolutionDictionary.get(key)
+            if type(answersWithCorrespondingCondition) == list:
+                if len(answersWithCorrespondingCondition) > amountOfUsage:
+                    theMostPopularKey = key
+                    amountOfUsage = len(answersWithCorrespondingCondition)
+            
+            elif type(answersWithCorrespondingCondition) == str:
+                if 1 > amountOfUsage:
+                    theMostPopularKey = key
+                    amountOfUsage = 1
+            
+            else:
+                raise TypeError("invalid answer type")
+            
+        keysToPickFrom.clear()
+
+        return theMostPopularKey
+```
+
+The second option generates the question at random.
+
+```python
+    #   pick condition for asking from list of available ones at the current iteration
+    def pick_random_condition_to_ask(self):
+        keysToPickFrom = []
+        
+        #   find available at the current iteration moment conditions
+        for key in list(self.conditionSolutionDictionary.keys()):
+            for possibleAnswer in self.possibleAnswers:
+                if type(self.conditionSolutionDictionary.get(key)) == list:
+                    for conditionAnswer in self.conditionSolutionDictionary.get(key):
+                        if conditionAnswer == possibleAnswer:
+                            keysToPickFrom.append(key)
+                else:
+                    if possibleAnswer == self.conditionSolutionDictionary.get(key):
+                        keysToPickFrom.append(key)
+                        
+        if type(keysToPickFrom) == list and len(keysToPickFrom) == 0:
+            return None
+
+        #   choose randomy condition to ask
+        randomCondition = random.choice(keysToPickFrom)
+        return randomCondition
+```
+
+The rest of the changes will only affect the user's interaction with the system.
+
+### User interace
+
+The system gives the manager the rules, and then listens for user input, reacting to various user responses and the results of internal system processes, informing the user about them.
+
+```python
+#   rule manager take DB of rules for further work
+ruleManager = RuleManager(rulesDB)
+
+#   here is command line interface for typing user conditions of new person and getting result from program.
+print("\tIf you want to check program, then type in your conditions and then program will give response basing on your input and rules defined by experts.")
+print("\tChoose condition out of the following ones (type 'yes', 'no' or 'do not know')")
+answer = None
+
+#   loop listening for user input
+while True:
+    
+    #   find condition to ask from user
+    currentConditionToCheck = ruleManager.pick_often_condition_to_ask()
+    
+    #   make sure that there are still conditions left to iterate through
+    if currentConditionToCheck == None:
+        print("\tThere are no conditions left. I can not define the person, maybe you will try again?")
+        ruleManager.reset_system()
+        print("\t...\n\t...\n\t...\n\t...initializing new round...\n\t...\n")
+        continue
+    
+    print("\tMaybe your person " + currentConditionToCheck + " ?")
+    
+    answer = input(">>>\t")
+    
+    #   if answer of the user is 'yes' then system removes all elements that do not have current condition
+    # and prepares next question conform remaining variants or give answer if there is only one variant left
+    if answer == "yes":
+        answerFromSystem = ruleManager.filter_possible_answer(currentConditionToCheck)
+        
+        #   if there is answer basing on user answers
+        if type(answerFromSystem) != list and answerFromSystem != None:
+            print("\tSystem suggests that this is a " + answerFromSystem)
+            ruleManager.reset_system()
+            currentConditionToCheck = None
+            print("\t...\n\t...\n\t...\n\t...initializing new round...\n\t...\n")
+            continue
+        
+        #   if there is answer that is encapsulated inside list
+        elif type(answerFromSystem) == list and len(answerFromSystem) == 1:
+            print("\tSystem thinks that this is a " + answerFromSystem[0])
+            ruleManager.reset_system()
+            currentConditionToCheck = None
+            print("\t...\n\t...\n\t...\n\t...initializing new round...\n\t...\n")
+            continue
+        
+        #   if there is empty list or no answer at all
+        elif (type(answerFromSystem) == list and len(answerFromSystem) == 0) or answerFromSystem == None:
+            print("\tThere is no answer basing on your answers. Either there is no answer or you answered incorrect. Try again.")
+            ruleManager.reset_system()
+            currentConditionToCheck = None
+            print("\t...\n\t...\n\t...\n\t...initializing new round...\n\t...\n")
+            continue
+        
+        #   default case
+        else:
+            ruleManager.del_incorrect_condition(currentConditionToCheck)
+            continue
+        
+    #   if the answer is no, then remove condition from list of possible next questions
+    elif answer == "no":
+        ruleManager.del_incorrect_condition(currentConditionToCheck)
+        currentConditionToCheck = None
+    
+    #   pick another variant if current one is unknown for the user
+    elif answer == "do not know":
+        continue
+   
+    #   if there is some another input from the user 
+    else:
+        print("So you can not choose a variant out of mentioned ones? I guess i can ignore it ¯\_(ツ)_/¯")
+        continue
+```
+
+**Important detail**: if a programmer wants to change the method of generating questions, then only the call to the filtering method in the user interaction segment needs to be changed.
+
+### Example of akinator-based program with "often-condition" principle
+
+![Example of work with expert akinator system based on rules from Laboratory work nr. 1](https://github.com/filpatterson/python_fia_codes/blob/master/screenshot-2.PNG?raw=true)

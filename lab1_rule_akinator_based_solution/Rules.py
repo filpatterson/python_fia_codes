@@ -8,23 +8,23 @@ rulesDB = [
     # Object 'Or()' consists of statements where one or more must be satisfied to consider match. Function 'then()' consists of
     # answer that object must provide if all conditions match.
     And(
-        ["have no hair", "have foggy eyes", "have no ears", "have round head", Or(["speaks force", "speaks high elfian"]), "have blue foggy body"]
+        ["has no hair", "has foggy eyes", "has no ears", "has round head", Or(["speaks force", "speaks high elfian"]), "has blue foggy body"]
     ).then("genie"),
     
     And(
-        [Or(["have black hair", "have brown hair"]), Or(["have green eyes", "have brown eyes", "have gray eyes"]), "have small round ears", "have round head", "speaks universal", "have white skin body"]
+        [Or(["has black hair", "has brown hair"]), Or(["has green eyes", "has brown eyes", "has gray eyes"]), "has small round ears", "has round head", "speaks universal", "has white skin body"]
     ).then("mandalorian"),
     
     And(
-        [Or(["have black hair", "have brown hair"]), "have blue eyes", "have small round ears", "have round head", Or(["speaks universal", "speaks force"]), Or(["have white skin body", "have yellow skin body", "have black skin body"])]
+        [Or(["has black hair", "has brown hair"]), "has blue eyes", "has small round ears", "has round head", Or(["speaks universal", "speaks force"]), Or(["has white skin body", "has yellow skin body", "has black skin body"])]
     ).then("jedi"),
     
     And(
-        ["have yellow hair", "have blue eyes", "have medium cubic ears", "have cubic head", Or(["speaks universal", "speaks tatooinean"]), "have black skin body"]
+        ["has yellow hair", "has blue eyes", "has medium cubic ears", "has cubic head", Or(["speaks universal", "speaks tatooinean"]), "has black skin body"]
     ).then("tatooiner"),
     
     And(
-        ["have white hair", Or(["have white eyes", "have black eyes"]), "have medium cubic ears", "have round head", Or(["speaks lunar", "speaks tatooinean", "speaks force"]), "have white skin body"]
+        ["has white hair", Or(["has white eyes", "has black eyes"]), "has medium cubic ears", "has round head", Or(["speaks lunar", "speaks tatooinean", "speaks force"]), "has white skin body"]
     ).then("loonie")
 ]
 
@@ -40,7 +40,7 @@ answer = None
 while True:
     
     #   find condition to ask from user
-    currentConditionToCheck = ruleManager.pick_random_condition_to_ask()
+    currentConditionToCheck = ruleManager.pick_often_condition_to_ask()
     
     #   make sure that there are still conditions left to iterate through
     if currentConditionToCheck == None:
@@ -49,7 +49,7 @@ while True:
         print("\t...\n\t...\n\t...\n\t...initializing new round...\n\t...\n")
         continue
     
-    print("\tMaybe your person could " + currentConditionToCheck + " ?")
+    print("\tMaybe your person " + currentConditionToCheck + " ?")
     
     answer = input(">>>\t")
     
@@ -62,13 +62,15 @@ while True:
         if type(answerFromSystem) != list and answerFromSystem != None:
             print("\tSystem suggests that this is a " + answerFromSystem)
             ruleManager.reset_system()
+            currentConditionToCheck = None
             print("\t...\n\t...\n\t...\n\t...initializing new round...\n\t...\n")
             continue
         
-        #   if there is answer that accidentally is encapsulated inside list
+        #   if there is answer that is encapsulated inside list
         elif type(answerFromSystem) == list and len(answerFromSystem) == 1:
-            print("\tSystem suggests that this is a " + answerFromSystem[0])
+            print("\tSystem thinks that this is a " + answerFromSystem[0])
             ruleManager.reset_system()
+            currentConditionToCheck = None
             print("\t...\n\t...\n\t...\n\t...initializing new round...\n\t...\n")
             continue
         
@@ -76,6 +78,7 @@ while True:
         elif (type(answerFromSystem) == list and len(answerFromSystem) == 0) or answerFromSystem == None:
             print("\tThere is no answer basing on your answers. Either there is no answer or you answered incorrect. Try again.")
             ruleManager.reset_system()
+            currentConditionToCheck = None
             print("\t...\n\t...\n\t...\n\t...initializing new round...\n\t...\n")
             continue
         
@@ -87,6 +90,7 @@ while True:
     #   if the answer is no, then remove condition from list of possible next questions
     elif answer == "no":
         ruleManager.del_incorrect_condition(currentConditionToCheck)
+        currentConditionToCheck = None
     
     #   pick another variant if current one is unknown for the user
     elif answer == "do not know":

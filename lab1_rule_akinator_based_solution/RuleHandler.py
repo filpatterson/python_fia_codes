@@ -23,28 +23,13 @@ class RuleManager(object):
         
     #   reset system if answer was given or appeared error
     def reset_system(self):
-        self.possibleAnswers = []
+        self.possibleAnswers.clear()
         for rule in self.rulesList:
             if issubclass(type(rule), Statement):
                 self.set_conditions_with_answer(rule, rule.response)
                 self.possibleAnswers.append(rule.response)
             else:
                 raise TypeError("Non rule object in database")
-        
-    #   return answer basing on user conditions matching any of the available rules.
-    # def give_best_match(self, userConditions):
-    #     response = None
-        
-    #     for rule in self.rulesList:
-    #         if isinstance(rule, And) or isinstance(rule, Or) or isinstance(rule, If) or isinstance(rule, Statement):
-    #             response = rule.give_response(userConditions)
-    #         else:
-    #             raise TypeError("rules db has a non-rule object")
-            
-    #         if response != "no match":
-    #             return response
-            
-    #     return "no match"
     
     #   add all new conditions and answers to the system
     def set_conditions_with_answer(self, rule, answer):
@@ -96,6 +81,47 @@ class RuleManager(object):
     def del_incorrect_condition(self, condition):
         self.conditionSolutionDictionary.pop(condition)
         
+    #   pick condition for asking from list of available ones at the current iteration
+    def pick_often_condition_to_ask(self):
+        keysToPickFrom = []
+        
+        #   find available at the current iteration moment conditions
+        for key in list(self.conditionSolutionDictionary.keys()):
+            for possibleAnswer in self.possibleAnswers:
+                if type(self.conditionSolutionDictionary.get(key)) == list:
+                    for conditionAnswer in self.conditionSolutionDictionary.get(key):
+                        if conditionAnswer == possibleAnswer:
+                            keysToPickFrom.append(key)
+                else:
+                    if possibleAnswer == self.conditionSolutionDictionary.get(key):
+                        keysToPickFrom.append(key)
+                        
+        if type(keysToPickFrom) == list and len(keysToPickFrom) == 0:
+            return None
+        
+        
+        #   choose such a condition that is most often met in the available rules
+        theMostPopularKey = None
+        amountOfUsage = 0
+        for key in keysToPickFrom:
+            answersWithCorrespondingCondition = self.conditionSolutionDictionary.get(key)
+            if type(answersWithCorrespondingCondition) == list:
+                if len(answersWithCorrespondingCondition) > amountOfUsage:
+                    theMostPopularKey = key
+                    amountOfUsage = len(answersWithCorrespondingCondition)
+            
+            elif type(answersWithCorrespondingCondition) == str:
+                if 1 > amountOfUsage:
+                    theMostPopularKey = key
+                    amountOfUsage = 1
+            
+            else:
+                raise TypeError("invalid answer type")
+            
+        keysToPickFrom.clear()
+
+        return theMostPopularKey
+    
     #   pick condition for asking from list of available ones at the current iteration
     def pick_random_condition_to_ask(self):
         keysToPickFrom = []
