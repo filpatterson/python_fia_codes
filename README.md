@@ -7,7 +7,7 @@ Hello, my name is Dumitru Cretu, I am a student of Technical University of Moldo
 - [Laboratory work nr. 1](#laboratory-work-nr-1)
   * [OOP-based problem solution](#oop-based-problem-solution)
   * [Rule-based expert-like system](#rule-based-expert-like-system)
-  * [Rule-based expert system (akinator prototype)](#rule-based-expert-system-(akinator-prototype))
+  * [Rule-based expert system (akinator prototype)](#rule-based-expert-system-as-akinator)
  
 # Laboratory work nr. 1
  
@@ -475,7 +475,7 @@ while True:
 
 ![Example of work with expert system based on rules from Laboratory work nr. 1](https://github.com/filpatterson/python_fia_codes/blob/master/screenshot.PNG?raw=true)
 
-## Rule-based expert system (akinator prototype)
+## Rule-based expert system as akinator
 
 The second implementation, despite the advantage over the first, has a disadvantage: it assumes that the user enters conditions on his own and the answer is determined based on them. It is more efficient for the user to answer the minimum set of questions to determine the answer to save time and system resources for processing all user conditions (there can be many of them). To accurately determine the answer, it was also necessary to enter the entire set of conditions, which is inconvenient for the user.
 
