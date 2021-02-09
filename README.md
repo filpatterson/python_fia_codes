@@ -6,7 +6,8 @@ Hello, my name is Dumitru Cretu, I am a student of Technical University of Moldo
 
 - [Laboratory work nr. 1](#laboratory-work-nr-1)
   * [OOP-based problem solution](#oop-based-problem-solution)
-  * [Rule-based expert system](#rule-based-expert-system)
+  * [Rule-based expert-like system](#rule-based-expert-like-system)
+  * [Rule-based expert system (akinator prototype)](#rule-based-expert-system-(akinator-prototype))
  
 # Laboratory work nr. 1
  
@@ -161,7 +162,7 @@ This approach allows you to quickly implement a semblance of a smart system, mak
 
 When new details are added to the question, new questions arise, and complex connections between facts are established, this system collapses and becomes ineffective. It is not an expert system, but an effective attempt to make it "visible" (or, as the English saying goes, "smoke and mirrors").
 
-## Rule-based expert system
+## Rule-based expert-like system
 
 In the first approach, rules were viewed as a collection of facts. In fact, a rule is a collection of facts with complex relationships and even nested rules. A static implementation of such a system is impossible.
 
@@ -473,3 +474,6 @@ while True:
 ### Example of interaction with user
 
 ![Example of work with expert system based on rules from Laboratory work nr. 1](https://github.com/filpatterson/python_fia_codes/blob/master/screenshot.PNG?raw=true)
+
+## Rule-based expert system (akinator prototype)
+
