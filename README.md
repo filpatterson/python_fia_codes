@@ -8,6 +8,7 @@ Hello, my name is Dumitru Cretu, I am a student of Technical University of Moldo
   * [OOP-based problem solution](#oop-based-problem-solution)
   * [Rule-based expert-like system](#rule-based-expert-like-system)
   * [Rule-based expert system (akinator prototype)](#rule-based-expert-system-as-akinator)
+  * [Rule-based expert system (strict akinator prototype)](#rule-based-akinator-with-strict-attribute-characteristic-relation)
  
 # Laboratory work nr. 1
  
