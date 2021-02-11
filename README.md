@@ -477,6 +477,8 @@ while True:
 
 ## Rule-based expert system as akinator
 
+The last two implementations, including the current one, were carried out together with my colleague Mihai Scebec from the FAF-172 group. The work was carried out separately in the cooperation of solutions for the implementation of the task (the code was written separately, but the ways of solving certain problems were stipulated).
+
 The second implementation, despite the advantage over the first, has a disadvantage: it assumes that the user enters conditions on his own and the answer is determined based on them. It is more efficient for the user to answer the minimum set of questions to determine the answer to save time and system resources for processing all user conditions (there can be many of them). To accurately determine the answer, it was also necessary to enter the entire set of conditions, which is inconvenient for the user.
 
 It was decided to create a third implementation with increased efficiency and minimized response time. This solution was inspired by the structure of the akinator programs.
@@ -485,7 +487,7 @@ The akinator program asks multiple-choice questions (yes, no, don’t know - the
 
 Generation of questions based on conditions is carried out in several formats (the basis is the presence of an algorithm for discarding the conditions of violated rules):
 
-* Generation of a question based on the frequency of a condition inside the rules that were not violated at the time. This format is convenient when there are many conditions and their intersections. The disadvantage of this approach is a large number of questions if the required answer is atypical (in the context of tourists, the program can ask many questions leading to incorrect answers before it gets to the right ones)
+* Generation of a question based on the frequency of a condition inside the rules that were not violated at the time (idea and approximate algorithm of was provided by Scebec Mihai). This format is convenient when there are many conditions and their intersections. The disadvantage of this approach is a large number of questions if the required answer is atypical (in the context of tourists, the program can ask many questions leading to incorrect answers before it gets to the right ones)
 * Generation of a question based on a random selection from unbroken rules. In a worst-case scenario, it can ask as many questions as possible leading to incorrect answers before getting to the correct ones. Will mostly give the average sample time.
 * Generation of a question depending on the "weight" of the condition. This approach is already closer to the field of artificial intelligence, since "weight" can be determined in several ways.
   * "Weight" is set by an expert or predefined. Non-adaptive option, requires significant analysis by a person or other system.
@@ -748,3 +750,192 @@ while True:
 ### Example of akinator-based program with "often-condition" principle
 
 ![Example of work with expert akinator system based on rules from Laboratory work nr. 1](https://github.com/filpatterson/python_fia_codes/blob/master/screenshot-2.PNG?raw=true)
+
+## Rule-based akinator with strict attribute-characteristic relation
+
+The latest version of the implementation of this algorithm was conceived with the aim of making the akinator more efficient. In the previous version of the akinator, which I implemented, the drawback was the impossibility of passing through the specific attributes of the rule, since their number could change, the order of the attributes was not fixed, which is why the system could not systematize the information received. Akinator in such an implementation is forced to ask specific questions about the presence of a certain characteristic in the user statement.
+
+The latest implementation removes this limitation of the akinator, allowing him to ask questions based on the attributes and characteristics assigned to these attributes. Thus, the number of questions to determine the answers is minimal, but the system makes several compromises:
+
+* Rules should follow a clear structure in which rules can be represented in a table, where the attribute is a column and the rule itself is a table row.
+* All characteristics in the rule follow a strictly defined sequence: first, the value is set for the first attribute, then for the second, and so on.
+* Variations of one rule (for example, when a rule may contain either one characteristic or another for a certain attribute) will be indicated as separate records with the same answer.
+
+Already from here you can see that this implementation is perfect for situations in which the expert system works with strictly defined areas or objects of consideration. The rules in the system are strictly defined and structured.
+
+This implementation belongs to Mihai Scebec. My contribution was to think through the idea of ​​attributes.
+
+### Rules estimation
+
+To begin with, the system accepts rules in the form of a strictly defined structure of values with a certain sequence. At the end of each rule, the rule index is indicated, which determines the system's response to the compliance with this rule in a response dictionary.
+
+```python
+race1 = ['nose',    'common skin',  'common eyes',    'common body',  'common hair',  0]
+race2 = ['nose',    'common skin',  'red eyes',       'tall body',    'red hair',     1]
+race3 = ['gills',   'scaly skin',   'wide eyes',      'low body',     'n/a hair',     2]
+race4 = ['nose',    'scaly skin',   'dark eyes',      'common body',  'dark hair',    3]
+race5 = ['nose',    'common skin',  'offended eyes',  'common body',  'common hair',  4]
+race6 = ['nose',    'common skin',  'common eyes',    'common body',  'white hair',   5]
+```
+
+After defintion of all rules or their import from database system appends all of them to the local list for addressing.
+
+```python
+#   define list of all rules and append all rules to that list
+allSpeciesList=[]
+allSpeciesList.append(race1)
+allSpeciesList.append(race2)
+allSpeciesList.append(race3)
+allSpeciesList.append(race4)
+allSpeciesList.append(race5)
+allSpeciesList.append(race6)
+```
+
+As was previously mentioned, the last parameter of the rule is the index that addresses to the answer from the response dictionary. The following code shows the creation of the dictionary.
+
+```python
+speciesDict = {
+  race1[-1]: "dirts",
+  race2[-1]: "marsmen",
+  race3[-1]: "neptunes",
+  race4[-1]: "jews",
+  race5[-1]: "tolerasts",
+  race6[-1]: "lunies"
+}
+```
+
+### Question generator, filter for unmatched rules
+
+The system should analyze the user's response, removing rules that do not match the already specified user responses. For this purpose, the following function has been implemented.
+
+```python
+#   remove elements (conditions) that are not matching with user answer
+def removeFromAllSpecies(redactedAnsw):
+    for x in allSpeciesList:
+        if redactedAnsw not in x:
+            allSpeciesList.remove(x)
+    for x in allSpeciesList:
+        if redactedAnsw not in x:
+            removeFromAllSpecies(redactedAnsw)
+```
+
+The generation of questions and possible answers to a question occurs due to the reference system, which decomposes the rules into components for analysis. To begin with, it is worth pointing out how the system sets benchmarks based on the available (not yet excluded) rules.
+
+The landmarks will just decompose the rules into a "tabular" structure, making it possible for the system to further analyze the required questions and generate answers to these questions.
+
+```python
+#   set orientirs for work
+def createOrientirs():
+
+    #   reinitialize (clear) orientirs to work with
+    print('Starting to create orientirs...')
+    orientirs.clear()
+
+    #   attributes iterator
+    xind = 0
+
+    #   rules iterator
+    yind = 0
+    
+    #   show how many species are at the moment
+    print('length of allSpecies: ' + str(len(allSpeciesList)))
+    
+    #   iterate through all attributes of the rule (considered that all rules have the 
+    # same amount of attributes defined in specific manner)
+    for x in range(len(allSpeciesList[0])):
+        temp = []
+
+        #   iterate through all rules
+        for y in range(len(allSpeciesList)):
+            if isinstance(allSpeciesList[xind][yind], str):
+                temp.append(allSpeciesList[xind][yind])
+            
+            #   make sure that system will not come out of amount of columns
+            if (xind < len(allSpeciesList)):    
+                xind +=1
+
+        #   reload attributes iterator
+        xind = 0
+
+        #   come to the next rule
+        if (yind < len(allSpeciesList[0])-1):    
+            yind +=1
+
+        #   append orientir if there is one
+        if len(temp) > 0:
+            orientirs.append(temp)
+
+    print('Orientirs created.')
+```
+
+The question generation system works quite simply: the program looks at the attributes of the rules and selects the option with the smallest number of answer options, thus filtering out the largest number of rules. The attribute acts as a question, and its values as answer options. A previously asked question (previously used attribute) cannot be applied again.
+
+```python
+#   function that picks question from remaining ones that has the least amount of possible variants
+# and best of all separates types (ensures that system will take the least amount of questions
+# to answer to the user). All possible conditions that are not matching with given answers are removed
+def findMostFittingQuestion():
+    #   index for listing questions with possible answers
+    i = 0
+
+    #   set a dictionary that will take orientirs and append them to keys
+    allQualities = {}
+    
+    #   take all remaining orientirs for iteration
+    for x in orientirs:
+        allQualities.update({i: len(list(set(x)))})        
+        i += 1
+    
+    #   find such question that has the least amount of possible variants
+    lowest = 999999999999
+    for x in allQualities.values():
+        if x < lowest and x > 1:
+            lowest = x
+
+    return list(allQualities.keys())[list(allQualities.values()).index(lowest)]
+```
+
+### Interaction with user
+
+The last piece of implementation is user interaction. After each successful answer or after starting the program, the system creates a set of landmarks. Analyzing it, the system generates a question for the user, giving answer options. The user answers the question, the system, based on the answer, removes already violated rules from the landmarks and leaves only those that are followed. Then, based on the remaining landmarks, the system generates the next question with subsequent answer options. The system will ask questions until there is only one answer left.
+
+```python
+#   user interface. This is the function for interation with user. 
+def processDialog():
+    print('Welcome to Akinator, Luna City edition!')
+    print('Let me walk you through several questions about the person you want to identify.')
+
+    #   perform iteration until error appears or user closes the program
+    whileBool = True
+    while whileBool == True:
+
+        #   set orientirs to work with
+        createOrientirs()
+        print('Please select one of options by index. Does that person have...')
+
+        #   give to the user such a question that has the least amount of variants (answers)
+        optionIndex = findMostFittingQuestion()
+        
+        #   iterate through all variants of the given question to inform user
+        printInd = 1
+        printList = list(set(orientirs[optionIndex]))
+        for x in printList:
+            print(str(printInd)+'. '+x)
+            printInd += 1
+        
+        #   listen for the user answer
+        rawAnswer = input('<< ')
+        redactedAnsw = printList[int(rawAnswer)-1]
+        
+        #   remove elements that do not match with the user answer
+        removeFromAllSpecies(redactedAnsw)
+
+        #   if there is only one answer (rule) remaining, then return as answer
+        if len(allSpeciesList) <= 1:
+            print('Your race is: '+speciesDict[allSpeciesList[0][-1]])
+            whileBool = False
+```
+
+### Example of work with strict akinator
+
+![Example of work with expert strict akinator system based on rules with "table" structure orientirs from Laboratory work nr. 1](https://github.com/filpatterson/python_fia_codes/blob/master/screenshot-3.PNG?raw=true)

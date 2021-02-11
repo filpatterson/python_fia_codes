@@ -6,6 +6,7 @@ Class responsible for taking all rules and performing check if user conditions m
 class RuleManager(object):
     def __init__(self, listOfRules):
         self.rulesList = listOfRules
+        self.allAttributesDictionary = dict
         
     #   return answer basing on user conditions matching any of the available rules.
     def give_best_match(self, userConditions):
