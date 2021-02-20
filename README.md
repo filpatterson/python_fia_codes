@@ -9,6 +9,7 @@ Hello, my name is Dumitru Cretu, I am a student of Technical University of Moldo
   * [Rule-based expert-like system](#rule-based-expert-like-system)
   * [Rule-based expert system (akinator prototype)](#rule-based-expert-system-as-akinator)
   * [Rule-based expert system (strict akinator prototype)](#rule-based-akinator-with-strict-attribute-characteristic-relation)
+- [Laboratory work nr. 2](#laboratory-work-nr-2)
  
 # Laboratory work nr. 1
  
@@ -940,3 +941,311 @@ def processDialog():
 ### Example of work with strict akinator
 
 ![Example of work with expert strict akinator system based on rules with "table" structure orientirs from Laboratory work nr. 1](https://github.com/filpatterson/python_fia_codes/blob/master/screenshot-3.PNG?raw=true)
+
+# Laboratory work nr. 2
+
+This laboratory work consisted in the creation of artificial intelligence of opponents in the game based on the behavior of the boids developed by Craig Reynolds. The principle of this behavior is based on the implementation of 3 simple laws below. For the game to work properly, it is also worth adding the player's ship pursuit rule.
+
+**Important note**: the original code of the game is not attached due to the presence of a corser license, only the code written in the framework of laboratory work is attached here.
+
+## Boid general description
+
+Boid is a life simulation program written by Craig Reynolds to simulate bird behavior. A feature is not the task of the behavior algorithm for the entire flock, but for each subject (bird) based on a set of simple rules.
+
+This behavior allows each part of the flock to be self-sufficient in terms of behavior and make this simulation realistic. Those simple rules are alignment, cohesion, and separation. For further simplicity each subject of the flock will be called a “bird”.
+
+## Alignment
+
+Alignment means that each bird will try to change its position or velocity to correspond to the medium velocity and medium direction of movement of either all birds in the flock or nearby birds. 
+
+*alignment = sum(velocity) / n*
+
+Alignment is the result of division of all velocities by the amount of birds. Alignment calculation can be applied either to all birds in the flock or to birds located nearby (best approach for nearby check: collect the data from birds located in a small rectangle around current bird). Alignment in the best case should be an acceleration vector that will be applied for smooth change of velocity for birds in the flock. The same moment about the acceleration vector is applicable to all laws of the flock behavior.
+All laws applications in the current system are realized via velocity vectors, making movements of meteors a little abrupt.
+
+## Cohesion
+
+Cohesion means that each bird will try to change its position or velocity to move toward the center of the mass of either all birds or nearby birds.
+
+*center_of_mass = sum(position) / n*
+
+Conform formula center of mass is division for sum of all elements by amount of all elements. The problem is that cohesion estimates direction where the bird should move, but there is no estimation of how vector values should be calculated. Vector values for the bird are calculated conform formula:
+
+*vector = (birdPosition - center_of_mass) / absolute_distance*
+
+The vector can describe either acceleration or velocity for the bird. In the current system this is the velocity vector.
+
+## Separation
+
+Separation means that each bird will try to keep safe distance in order to evade collision with another bird in the flock. If previous laws can be calculated based on the data about all birds in the flock, this one can be calculated only for nearby birds. 
+
+Conform visualization and description can be estimated that vector (velocity or acceleration) can be defined by the same principle as cohesion, but this is applied only to nearby birds and the vector will be reversed to move out from the center of mass for nearby birds to evade collision, meaning that only the last formula will be changed from cohesion formulas: 
+
+*vector = (center_of_mass - birdPosition) / absolute_distance*
+
+## Chasing ship
+
+If aggressive behavior of meteors has been called then they must chase after a user’s ship. Task can be completed by using cohesion law, replacing the center of mass by coordinates of the ship.
+
+## Code examples with explanations
+
+```python
+def update(self):
+        self.vel = BoidBehavior.apply_all_flock_laws(self, rock_group, my_ship)
+ 
+        for i in range(DIMENSIONS):
+            self.pos[i] %= CANVAS_RES[i]
+            self.pos[i] += self.vel[i]
+ 
+        self.angle += self.angle_vel
+        self.age += 1
+ 
+        # return True if the sprite is old and needs to be destroyed
+        if self.age < self.lifespan:
+            return False
+        else:
+            return True
+```
+
+The first line of this method integrates the main part of the library (task of the second lab) ignoring part of switching behavior of meteors between aggressive one and passive one.
+
+```python
+    def start_being_chased(self, shoot):
+        if shoot > 0:
+            if self.is_chased:
+                self.is_chased = False
+            elif not self.is_chased:
+                self.is_chased = True
+ 
+            print(self.is_chased)
+```
+
+This part of code switches behavior of the meteors if “space” key has been pressed.
+
+```python
+class VectorsMath:
+ 
+    #   get vector with sum of dimension elements
+    @staticmethod
+    def sum_of_vectors(first_vector, second_vector):
+        resulting_vector = [0] * len(first_vector)
+ 
+        #   iterate through each vector dimension
+        for i in range(len(first_vector)):
+            resulting_vector[i] = first_vector[i] + second_vector[i]
+ 
+        return resulting_vector
+ 
+    #   get vector with negation of dimension elements
+    @staticmethod
+    def negation_of_vectors(first_vector, second_vector):
+        resulting_vector = [0] * len(first_vector)
+        for i in range(len(first_vector)):
+            resulting_vector[i] = first_vector[i] - second_vector[i]
+ 
+        return resulting_vector
+ 
+    #   get vector with multiplication of dimension elements
+    @staticmethod
+    def multiplication_of_vectors(first_vector, second_vector):
+        resulting_vector = [0] * len(first_vector)
+        for i in range(len(first_vector)):
+            resulting_vector[i] = first_vector[i] * second_vector[i]
+ 
+        return resulting_vector
+ 
+    #   get vector with division of dimension elements by value
+    @staticmethod
+    def dividing_vector_by_value(vector, value):
+        if value == 0:
+            return vector
+ 
+        resulting_vector = [0] * len(vector)
+        for i in range(len(vector)):
+            resulting_vector[i] = vector[i] / value
+ 
+        return resulting_vector
+ 
+    #   get vector with multiplication of dimension elements by value
+    @staticmethod
+    def multiply_vector_by_value(vector, value):
+        resulting_vector = [0] * len(vector)
+        for i in range(len(vector)):
+            resulting_vector[i] = vector[i] * value
+ 
+        return resulting_vector
+```
+
+All arithmetic operations have commentaries defining what each method does and all variables contain clear names that show what operations over what data is performed. All methods are set as static for evading the need of creating objects of this type.
+
+```python
+class PointMath:
+ 
+    #   transform angle to the vector
+    @staticmethod
+    def angle_to_vector(ang):
+        return [math.cos(ang), math.sin(ang)]
+ 
+    #   get distance between two points
+    @staticmethod
+    def distance(first_point, second_point):
+        return math.sqrt((first_point[0] - second_point[0]) ** 2 + (first_point[1] - second_point[1]) ** 2)
+```
+
+This is a very small class considering that the amount of required operations for making boids behavior is small.
+
+```python
+class BoidBehavior:
+    #   define center of mass for all boids and move boid to this center
+    @staticmethod
+    def cohesion(boid: Sprite, boids_group: set[Sprite]):
+        #   if there is less than two boids then do not work
+        if len(boids_group) < 2:
+            return 0
+ 
+        #   init array for center of mass
+        center_of_mass = [0] * len(boid.pos)
+        total = 0
+ 
+        #   iterate through all boids
+        for anotherBoid in boids_group:
+            #   accumulate positions to find center of mass and count boids
+            center_of_mass = VectorsMath.sum_of_vectors(center_of_mass, anotherBoid.pos)
+            total += 1
+ 
+        #   if amount of boids is bigger than one boid
+        if total > 1:
+            #   find arithmetical average of all positions
+            center_of_mass = VectorsMath.dividing_vector_by_value(center_of_mass, total)
+ 
+            #   find difference of coordinates between center of mass and current boid
+            differential_coordinate = VectorsMath.negation_of_vectors(center_of_mass, boid.pos)
+ 
+            #   transform difference of coordinates into velocity vector
+            differential_coordinate = VectorsMath.dividing_vector_by_value(
+                differential_coordinate, PointMath.distance(center_of_mass, boid.pos)
+            )
+ 
+            #   normalize values of the vector to be applicable
+            differential_coordinate = BoidBehavior.normalize_velocity_vector(differential_coordinate)
+            return differential_coordinate
+        #   if there is only one boid or none, then there is nothing to change
+        else:
+            return 0
+ 
+    #   return vector for chasing ship
+    @staticmethod
+    def chase(boid: Sprite, ship_to_be_chased: Ship):
+        #   define difference of coordinates between boid and ship
+        differential_coordinate = VectorsMath.negation_of_vectors(ship_to_be_chased.pos, boid.pos)
+ 
+        #   transform difference of coordinates into velocity vector
+        differential_coordinate = VectorsMath.dividing_vector_by_value(
+            differential_coordinate, PointMath.distance(ship_to_be_chased.pos, boid.pos) / 1.5
+        )
+ 
+        #   normalize velocity vector to be applicable
+        differential_coordinate = BoidBehavior.normalize_velocity_vector(differential_coordinate)
+        return differential_coordinate
+ 
+    #   return vector for pushing away from boids (keeping minimal possible distance)
+    @staticmethod
+    def separation(boid: Sprite, boids_group: set[Sprite]):
+        #   if there is less than two boids then do not make calculation
+        if len(boids_group) < 2:
+            return 0
+ 
+        #   init vector for movement
+        avg_counter_movement = [0] * len(boid.pos)
+        total = 0
+ 
+        #   iterate through all boids
+        for another_boid in boids_group:
+            #   find distance between boid and boid for list of all boids
+            distance = PointMath.distance(boid.pos, another_boid.pos)
+ 
+            #   if distance is less than 3 radii
+            if distance < boid.get_radius() * 3:
+                #   algorithm is similar to the "chase" principle
+                differential_coordinate = VectorsMath.negation_of_vectors(boid.pos, another_boid.pos)
+                differential_coordinate = VectorsMath.dividing_vector_by_value(differential_coordinate, distance / 6)
+                avg_counter_movement = VectorsMath.sum_of_vectors(avg_counter_movement, differential_coordinate)
+                total += 1
+ 
+        if total > 1:
+            avg_counter_movement = VectorsMath.dividing_vector_by_value(avg_counter_movement, total)
+            return avg_counter_movement
+        else:
+            return 0
+ 
+    #   return average velocity vector of all movement vectors of all boids
+    @staticmethod
+    def align(boid: Sprite, boids_group: set[Sprite]):
+        if len(boids_group) < 2:
+            return 0
+        avg_movement = [0] * len(boid.pos)
+        total = 0
+ 
+        for another_boid in boids_group:
+            #   accumulate all velocity vectors
+            avg_movement = VectorsMath.sum_of_vectors(avg_movement, another_boid.vel)
+            total += 1
+ 
+        if total > 1:
+            avg_movement = VectorsMath.dividing_vector_by_value(avg_movement, total)
+            return avg_movement
+        else:
+            return 0
+ 
+    #   normalize velocity vector to be applicable to the simulation
+    @staticmethod
+    def normalize_velocity_vector(vector: set[int]):
+        for i in range(len(vector)):
+            if vector[i] > 1:
+                vector[i] = 1
+            elif vector[i] < -1:
+                vector[i] = -1
+ 
+        return vector
+ 
+    #   define all vectors for alignment, separation, cohesion, chase, then apply them to the velocity
+    @staticmethod
+    def apply_all_flock_laws(boid: Sprite, boids_group: set[Sprite], ship_to_be_chased: Ship):
+        #   initialize vector for accumulating flock changes
+        applied_velocity = [0] * len(boid.vel)
+ 
+        #   calculate all flock movement vectors
+        cohesion_velocity = BoidBehavior.cohesion(boid, boids_group)
+        separation_velocity = BoidBehavior.separation(boid, boids_group)
+        align_velocity = BoidBehavior.align(boid, boids_group)
+ 
+        #   accumulate all flock movement vectors
+        if cohesion_velocity != 0:
+            applied_velocity = VectorsMath.sum_of_vectors(applied_velocity, cohesion_velocity)
+        if separation_velocity != 0:
+            applied_velocity = VectorsMath.sum_of_vectors(applied_velocity, separation_velocity)
+        if align_velocity != 0:
+            applied_velocity = VectorsMath.sum_of_vectors(applied_velocity, align_velocity)
+        if ship_to_be_chased.is_chased:
+            chasing_velocity = BoidBehavior.chase(boid, ship_to_be_chased)
+            if chasing_velocity != 0:
+                applied_velocity = VectorsMath.sum_of_vectors(applied_velocity, chasing_velocity)
+ 
+        #   apply flock movement vectors to the movement vector
+        boid.vel = VectorsMath.sum_of_vectors(boid.vel, applied_velocity)
+ 
+        #   normalize velocity and round it to the least possible step
+        boid.vel = BoidBehavior.normalize_velocity_vector(boid.vel)
+        for i in range(len(boid.vel)):
+            boid.vel[i] = round(boid.vel[i], 3)
+ 
+        return boid.vel
+```
+
+All code is commented almost for every line in order to make clear what program does and to show how calculations work. Class implements all three laws of the boid and additional law for chasing ship conform task of the laboratory work.
+
+## Example of how to launch code and how it works
+
+Code is written to work using Code Skulptor 3. 
+
+![Example of work of the game with implemented patters for laboratory work nr. 2](https://github.com/filpatterson/python_fia_codes/blob/master/lab_2_game_record.gif?raw=true)
