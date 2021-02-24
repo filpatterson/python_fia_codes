@@ -1,6 +1,8 @@
 import numpy as np
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import PolynomialFeatures
+import matplotlib.pyplot as plt
+
 
 #   init empty arrays for taking data from file
 data = []
@@ -25,7 +27,7 @@ with open("apartmentComplexData.txt") as file_db:
 data, answers = np.array(data), np.array(answers)
 
 #   init polynomial features object
-transformer = PolynomialFeatures(degree=5, include_bias=True)
+transformer = PolynomialFeatures(degree=2, include_bias=True)
 
 #   fit input for polynomial analysis
 transformer.fit(data)
@@ -54,3 +56,12 @@ for i in range(5):
 #   show another answers to the first five inputs from the original table basing on finished regression
 for i in range(5):
     print("for data " + str(data[i]) + " the answer is " + str(answers_predicted[i]))
+
+#   graphical representation of the data for making visual analysis of the results
+plt.scatter(range(0, 100), answers[:100], color="red")
+plt.plot(range(0, 100), answers_predicted[:100], color="blue")
+plt.title("first 100 original results and predictions of second degree(originals - red, predicted - blue")
+plt.xlabel("record ID")
+plt.ylabel("Answer value")
+plt.grid(color="black")
+plt.show()

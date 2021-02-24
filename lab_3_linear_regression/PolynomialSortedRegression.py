@@ -1,6 +1,8 @@
 import numpy as np
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import PolynomialFeatures
+import sklearn.preprocessing as preprop
+import matplotlib.pyplot as plt
 
 #   init empty arrays for taking data from file
 data = []
@@ -16,20 +18,34 @@ with open("apartmentComplexData.txt") as file_db:
 
         primary_data_from_file.append(current_row_usable_data)
 
-primary_data_from_file.sort(key=lambda x: x[2])
+# scaler = preprop.StandardScaler()
+# primary_data_from_file = scaler.fit_transform(primary_data_from_file)
 
+# pt = preprop.PowerTransformer(method="box-cox", standardize=True)
+# primary_data_from_file = pt.fit_transform(primary_data_from_file)
+
+# quantile_transformer = preprop.QuantileTransformer(output_distribution="normal", random_state=0)
+# primary_data_from_file = quantile_transformer.fit_transform(primary_data_from_file)
+
+# primary_data_from_file = preprop.normalize(primary_data_from_file, norm="l2")
 for i in range(len(primary_data_from_file)):
     current_record = [primary_data_from_file[i][0], primary_data_from_file[i][1], primary_data_from_file[i][2],
                       primary_data_from_file[i][3], primary_data_from_file[i][4]]
 
     data.append(current_record)
-    answers.append(primary_data_from_file[i][0])
+    answers.append(primary_data_from_file[i][5])
+
+# data = preprop.normalize(data)
+# scaler = preprop.StandardScaler()
+# primary_data_from_file = scaler.fit_transform(primary_data_from_file)
+
+data = preprop.normalize(data)
 
 #   transform standard arrays into numpy arrays
 data, answers = np.array(data), np.array(answers)
 
 #   init polynomial features object
-transformer = PolynomialFeatures(degree=4, include_bias=True)
+transformer = PolynomialFeatures(degree=5, include_bias=False)
 
 #   fit input for polynomial analysis
 transformer.fit(data)
@@ -52,9 +68,18 @@ print("\t\tslope: " + str(model.coef_))
 answers_predicted = model.predict(polynomial_data)
 
 #   for showing how system works, print first 5 elements of original table
-for i in range(100):
+for i in range(5):
     print("before analysis :" + str(data[i]) + " have answer " + str(answers[i]))
 
 #   show another answers to the first five inputs from the original table basing on finished regression
-for i in range(100):
+for i in range(5):
     print("for data " + str(data[i]) + " the answer is " + str(answers_predicted[i]))
+
+#   graphical representation of the data for making visual analysis of the results
+plt.scatter(range(0, 100), answers[:100], color="red")
+plt.plot(range(0, 100), answers_predicted[:100], color="blue")
+plt.title("first 100 original results and predictions (originals - red, predicted - blue")
+plt.xlabel("record ID")
+plt.ylabel("Answer value")
+plt.grid(color="black")
+plt.show()

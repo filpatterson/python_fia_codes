@@ -1,5 +1,6 @@
 import numpy as np
 from sklearn.linear_model import LinearRegression
+import matplotlib.pyplot as plt
 
 #   init empty arrays for taking data from file
 data = []
@@ -44,3 +45,12 @@ answers_predicted = model.predict(data)
 #   show another answers to the first five inputs from the original table basing on finished regression
 for i in range(5):
     print("for data " + str(data[i]) + " the answer is " + str(answers_predicted[i]))
+
+#   graphical representation of the data for making visual analysis of the results
+plt.scatter(range(0, 100), answers[:100], color="red")
+plt.plot(range(0, 100), answers_predicted[:100], color="blue")
+plt.title("first 100 original results and predictions (originals - red, predicted - blue")
+plt.xlabel("record ID")
+plt.ylabel("Answer value")
+plt.grid(color="black")
+plt.show()
