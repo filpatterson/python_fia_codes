@@ -7,7 +7,7 @@ data = []
 answers = []
 primary_data_from_file = []
 
-with open("apartmentComplexData.txt") as file_db:
+with open("apartment_db.txt") as file_db:
     for line in file_db:
         row = line.split(",")
 
@@ -37,28 +37,19 @@ results = model.fit()
 
 print(results.summary())
 
-#   show variables that are inner part of linear regression module
-print("\n\n\n\n\t\tcoefficient of determination: " + str(results.rsquared))
-print("\t\tregression coefficients: " + str(results.params))
-
 #   generate possible answers using the same data as was provided to compare solutions
 answers_predicted = results.predict(data)
 
-#   for showing how system works, print first 5 elements of original table
-for i in range(5):
-    print("before analysis :" + str(data[i]) + " have answer " + str(answers[i]))
-
-#   show another answers to the first five inputs from the original table basing on finished regression
-for i in range(5):
-    print("for data " + str(data[i]) + " the answer is " + str(answers_predicted[i]))
+for i in range(10):
+    print("Original answer is " + str(answers[i]) + " and the predicted one is " + str(answers_predicted[i]))
 
 representable_plot_size = len(data)
 
 #   graphical representation of the data for making visual analysis of the results
 plt.scatter(range(0, representable_plot_size), answers[:representable_plot_size], color="red")
 plt.plot(range(0, representable_plot_size), answers_predicted[:representable_plot_size], color="blue")
-plt.title("first 100 original results and predictions (originals - red, predicted - blue")
+plt.title("original results and predictions (originals - red, predicted - blue)")
 plt.xlabel("record ID")
-plt.ylabel("Answer value")
+plt.ylabel("Median Complex Value")
 plt.grid(color="black")
 plt.show()

@@ -7,7 +7,7 @@ data = []
 answers = []
 
 #   open file with table of required for analysis data and process row-by-row
-with open("apartmentComplexData.txt") as file_db:
+with open("apartment_db.txt") as file_db:
     for line in file_db:
         #   separate all elements in row by comma
         row = line.split(",")
@@ -24,10 +24,6 @@ with open("apartmentComplexData.txt") as file_db:
 #   transform standard arrays into numpy arrays
 data, answers = np.array(data), np.array(answers)
 
-#   for showing how system works, print first 5 elements of original table
-for i in range(5):
-    print("before analysis :" + str(data[i]) + " have answer " + str(answers[i]))
-
 #   fit data with answers to the LinearRegression module for analysis
 model = LinearRegression().fit(data, answers)
 
@@ -42,14 +38,15 @@ print("\t\tslope: " + str(model.coef_))
 #   generate possible answers using the same data as was provided to compare solutions
 answers_predicted = model.predict(data)
 
-#   show another answers to the first five inputs from the original table basing on finished regression
-for i in range(5):
-    print("for data " + str(data[i]) + " the answer is " + str(answers_predicted[i]))
+for i in range(10):
+    print("Original answer is " + str(answers[i]) + " and the predicted one is " + str(answers_predicted[i]))
+
+representable_plot_size = len(data)
 
 #   graphical representation of the data for making visual analysis of the results
-plt.scatter(range(0, 100), answers[:100], color="red")
-plt.plot(range(0, 100), answers_predicted[:100], color="blue")
-plt.title("first 100 original results and predictions (originals - red, predicted - blue")
+plt.scatter(range(0, representable_plot_size), answers[:representable_plot_size], color="red")
+plt.plot(range(0, representable_plot_size), answers_predicted[:representable_plot_size], color="blue")
+plt.title("original results and predictions (originals - red, predicted - blue)")
 plt.xlabel("record ID")
 plt.ylabel("Answer value")
 plt.grid(color="black")

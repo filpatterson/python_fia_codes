@@ -33,7 +33,7 @@ print(
 choice_about_analyzable_data = input(">>>\t")
 
 #   read the data from file considering user's choice about how to make read (all the data or conform lab requirements)
-with open("apartmentComplexData.txt") as file_db:
+with open("apartment_db.txt") as file_db:
     if choice_about_analyzable_data == 'n':
         for line in file_db:
             row = line.split(",")
@@ -73,21 +73,6 @@ print(
 )
 method_for_data_optimization = input(">>>\t")
 
-#   apply chosen optimization for the data (considering small amount of options "if-else" relation implemented
-transformer = None
-
-if method_for_data_optimization == STANDARDIZATION_METHOD_INDEX:
-    transformer = preprocessing.StandardScaler()
-    primary_data_from_file = transformer.fit_transform(primary_data_from_file)
-
-elif method_for_data_optimization == GAUSSIAN_DISTRIBUTION_METHOD_INDEX:
-    transformer = preprocessing.PowerTransformer(method="box-cox", standardize=True)
-    primary_data_from_file = transformer.fit_transform(primary_data_from_file)
-
-elif method_for_data_optimization == QUANTILE_TRANSFORMATION_METHOD_INDEX:
-    transformer = preprocessing.QuantileTransformer(output_distribution="normal", random_state=0)
-    primary_data_from_file = transformer.fit_transform(primary_data_from_file)
-
 #   get the data from primary taken data after optimizations conform user's choice made previously
 if choice_about_analyzable_data == "y":
     for i in range(len(primary_data_from_file)):
@@ -115,7 +100,22 @@ elif choice_about_analyzable_data == "n":
         data.append(current_record)
         answers.append(primary_data_from_file[i][5])
 
-if method_for_data_optimization == NORMALIZATION_OF_INPUTS_METHOD_INDEX:
+#   apply chosen optimization for the data (considering small amount of options "if-else" relation implemented
+transformer = None
+
+if int(method_for_data_optimization) == STANDARDIZATION_METHOD_INDEX:
+    transformer = preprocessing.StandardScaler()
+    data = transformer.fit_transform(data)
+
+elif int(method_for_data_optimization) == GAUSSIAN_DISTRIBUTION_METHOD_INDEX:
+    transformer = preprocessing.PowerTransformer(method="box-cox", standardize=True)
+    data = transformer.fit_transform(data)
+
+elif int(method_for_data_optimization) == QUANTILE_TRANSFORMATION_METHOD_INDEX:
+    transformer = preprocessing.QuantileTransformer(output_distribution="normal", random_state=0)
+    data = transformer.fit_transform(data)
+
+if int(method_for_data_optimization) == NORMALIZATION_OF_INPUTS_METHOD_INDEX:
     data = preprocessing.normalize(data)
 
 #   choose if there is IQR outliers filtering required
@@ -186,7 +186,7 @@ plt.scatter(range(0, representable_plot_size), answers[:representable_plot_size]
 #   set predicted answers as blue plot on the diagram
 plt.plot(range(0, representable_plot_size), answers_predicted[:representable_plot_size], color="blue")
 
-plt.title("graph of original answers and predictions (originals - red, predicted - blue")
+plt.title("Graph for original answers and predictions (originals - red, predicted - blue)")
 plt.xlabel("record ID")
 plt.ylabel("Median Complex Value")
 plt.grid(color="black")
