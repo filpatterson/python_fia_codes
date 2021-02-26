@@ -52,9 +52,11 @@ for i in range(5):
 for i in range(5):
     print("for data " + str(data[i]) + " the answer is " + str(answers_predicted[i]))
 
+representable_plot_size = len(data)
+
 #   graphical representation of the data for making visual analysis of the results
-plt.scatter(range(0, 100), answers[:100], color="red")
-plt.plot(range(0, 100), answers_predicted[:100], color="blue")
+plt.scatter(range(0, representable_plot_size), answers[:representable_plot_size], color="red")
+plt.plot(range(0, representable_plot_size), answers_predicted[:representable_plot_size], color="blue")
 plt.title("first 100 original results and predictions (originals - red, predicted - blue")
 plt.xlabel("record ID")
 plt.ylabel("Answer value")
