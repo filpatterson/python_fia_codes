@@ -17,11 +17,11 @@ Hello, my name is Dumitru Cretu, I am a student of Technical University of Moldo
     * [Visual data representation](#visual-data-representation)
     * [Advanced Linear Regression](#advanced-linear-regression)
   * [Main program of the laboratory work, the most important solutions](#Main-program-of-the-laboratory-work,-the-most-important-solutions)
-  * [Different data optimization methods](#different-data-optimization-methods)
-  * [IQR data filtering or how to remove outliers](#iqr-data-filtering-or-how-to-remove-outliers)
-  * [Data expansion](#data-expansion)
-  * [Medium error](#medium-error)
-  * [Polynomial Regression of n-th degree](#polynomial-regression-of-n-th-degree)
+    * [Different data optimization methods](#different-data-optimization-methods)
+    * [IQR data filtering or how to remove outliers](#iqr-data-filtering-or-how-to-remove-outliers)
+    * [Data expansion](#data-expansion)
+    * [Medium error](#medium-error)
+    * [Polynomial Regression of n-th degree](#polynomial-regression-of-n-th-degree)
 
 # Laboratory work nr. 1
  
