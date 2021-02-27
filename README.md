@@ -10,7 +10,19 @@ Hello, my name is Dumitru Cretu, I am a student of Technical University of Moldo
   * [Rule-based expert system (akinator prototype)](#rule-based-expert-system-as-akinator)
   * [Rule-based expert system (strict akinator prototype)](#rule-based-akinator-with-strict-attribute-characteristic-relation)
 - [Laboratory work nr. 2](#laboratory-work-nr-2)
- 
+- [Laboratory work nr. 3](#laboratory-work-nr-3)
+  * [Minor decisions or first steps to solving the problem](#minor-decisions-or-first-steps-to-solving-the-problem) 
+    * [Reading data from file](#reading-data-from-file)
+    * [Multiple Linear Regression algorithm](#multiple-linear-regression-algorithm)
+    * [Visual data representation](#visual-data-representation)
+    * [Advanced Linear Regression](#advanced-linear-regression)
+  * [Main program of the laboratory work, the most important solutions](#Main-program-of-the-laboratory-work,-the-most-important-solutions)
+  * [Different data optimization methods](#different-data-optimization-methods)
+  * [IQR data filtering or how to remove outliers](#iqr-data-filtering-or-how-to-remove-outliers)
+  * [Data expansion](#data-expansion)
+  * [Medium error](#medium-error)
+  * [Polynomial Regression of n-th degree](#polynomial-regression-of-n-th-degree)
+
 # Laboratory work nr. 1
  
 The first laboratory work is about making a rule-based expert system that will be able to get a database of rules and basing on them to give answers to the user statements.
@@ -1249,3 +1261,243 @@ All code is commented almost for every line in order to make clear what program 
 Code is written to work using Code Skulptor 3. 
 
 ![Example of work of the game with implemented patters for laboratory work nr. 2](https://github.com/filpatterson/python_fia_codes/blob/master/lab_2_game_record.gif?raw=true)
+
+# Laboratory work nr. 3
+
+The third laboratory work was about making a regression basing on the dataset taken from ```txt``` file. Conform conditions of the laboratory work there was allowed read of columns 3, 4, 5, 6, 7 as input data and column 9 as output data (answers).
+
+There are three files available for performing regression:
+
+* ```MultipleLinearRegression.py``` is a simple regression method that uses concept of making simple polynomial of first degree;
+* ```AdvancedLinearRegression.py``` is a regression method that performs polynomial regression based on the OLS (ordinary least squares) algorithm and uses ```statsmodel``` library;
+* ```PolynomialSortedRegression.py``` is a main implementation of the regression algorithm in current laboratort work. This is the result of applying all discovered methods for data optimization and different methods of regression.
+
+Considering that there are three files that were implemented and only the last one is a main regression method implemented for the laboratory work, next chapter is divided conform role of programs in making laboratory work.
+
+## Minor decisions or first steps to solving the problem
+
+### Reading data from file
+
+First step toward solving the problem was to make data reading from file. There are libraries like ```pandas``` for making reading from file, but I considered that can implement fast and small solution for the problem myself.
+
+```python
+#   open file with table of required for analysis data and process row-by-row
+with open("apartment_db.txt") as file_db:
+    for line in file_db:
+        #   separate all elements in row by comma
+        row = line.split(",")
+
+        #   append elements of the row into an inner array that will represent variables of polynomial
+        current_row_usable_data = [float(row[2]), float(row[3]), float(row[4]), float(row[5]), float(row[6])]
+
+        #   append those variables into the list of polynomial inputs, transforming string to float
+        data.append(current_row_usable_data)
+
+        #   append current row's answer to the polynomial, transforming string to float
+        answers.append(float(row[8]))
+```
+
+All the data presented in file are converted to float values. Data is separated to answers and inputs (in the program it is called as ```data``` variable) for performing further regression.
+
+### Multiple Linear Regression algorithm
+
+Multiple linear regression alforithm is about making polynomial of the first degree that will match with provided data (or try to match). It is a great method for regressing simple data with simple structure (some incremental statistical data with small value of variables), but if there are complex data that method is not working at all.
+
+We take that program already received data from the file. The last principle is to create regression model and call it:
+
+```python
+#   transform standard arrays into numpy arrays
+data, answers = np.array(data), np.array(answers)
+
+#   fit data with answers to the LinearRegression module for analysis
+model = LinearRegression().fit(data, answers)
+
+#   try to analyze data and get scores
+r_sq = model.score(data, answers)
+
+#   generate possible answers using the same data as was provided to compare solutions
+answers_predicted = model.predict(data)
+```
+
+All regression results are stored into ```answers_predicted``` list. The main part is done in ```model.score()``` function that takes inputs and answers for analysis and creating polynomia. ```model.predict()``` only applies given data to polynomial and shows its prediction.
+
+### Visual data representation
+
+The problem during the work was that there were used coefficients for performing effiency of regression, but there was no clear undestanding of how this correlates with the real picture. So authors decided to make data diagrams:
+
+```python
+#   graphical representation of the data for making visual analysis of the results
+plt.scatter(range(0, representable_plot_size), answers[:representable_plot_size], color="red")
+plt.plot(range(0, representable_plot_size), answers_predicted[:representable_plot_size], color="blue")
+plt.title("original results and predictions (originals - red, predicted - blue)")
+plt.xlabel("record ID")
+plt.ylabel("Answer value")
+plt.grid(color="black")
+plt.show()
+```
+
+### Advanced Linear Regression
+
+The only difference of this regression method comparing to ```MultipleLinearRegression.py``` is that here is called polynomial regression using ordinary least squares method and it is called with next lines of code (we again suggest that there was performed data read):
+
+```python
+#   add column of ones for calculating b0
+data = sm.add_constant(data)
+
+#   setting regression basing on ordinary least squares
+model = sm.OLS(answers, data)
+
+#   after setting model fit all answers for processing (they're already should be placed in)
+results = model.fit()
+
+print(results.summary())
+
+#   generate possible answers using the same data as was provided to compare solutions
+answers_predicted = results.predict(data)
+```
+
+## Main program of the laboratory work, the most important solutions
+
+The previous programs have shown that it is simple to call regression using Python code and there are many available methods, libraries and so on. So authors decided that it would be great to provide different regression methods and data optimizations for the user to choose from.
+
+### Different data optimization methods
+
+There are small amount of cases where data from the start can be efficiently understood by a program. So there is need in performing data optimizations that will rise efficiency of data analysis. 
+
+The base principle of data optimization is performing standardization of data, which is transforming data to be approaching 0 but having variance of 1, but this method does not perform strict data limiting in range of [-1; 1]. If there is need in making this data strictly limited in interval [-1; 1] then must be performed data normalization.
+
+But what if there is need in performing efficient Gaussian data distribution of inputs? For this case there are two methods provided:
+
+* Gaussian distribution performed by Box-Cox method. The only limit of this approach is that the data must be strictly greater than 0. For positive data can be the best approach;
+* Quantile transformation is also a Gaussian distribution method, but it is applied to each data section individually rising efficiency of data districution. It is the best approach in general case of making Gaussian distribution.
+
+**Important moment** there is no bad or good data optimization method, each case is unique and some methods will shine in one case and will be bad in another. Try all of them separately to find the best one for your case.
+
+So, all of those data optimizations are called in one code section depending on the user's choice:
+
+```python
+if int(method_for_data_optimization) == STANDARDIZATION_METHOD_INDEX:
+    transformer = preprocessing.StandardScaler()
+    data = transformer.fit_transform(data)
+
+elif int(method_for_data_optimization) == GAUSSIAN_DISTRIBUTION_METHOD_INDEX:
+    transformer = preprocessing.PowerTransformer(method="box-cox", standardize=True)
+    data = transformer.fit_transform(data)
+
+elif int(method_for_data_optimization) == QUANTILE_TRANSFORMATION_METHOD_INDEX:
+    transformer = preprocessing.QuantileTransformer(output_distribution="normal", random_state=0)
+    data = transformer.fit_transform(data)
+
+if int(method_for_data_optimization) == NORMALIZATION_OF_INPUTS_METHOD_INDEX:
+    data = preprocessing.normalize(data)
+```
+
+### IQR data filtering or how to remove outliers
+
+Statistical data has one great problem: there are records that do not match with the rule. There can be many leaps and falls of data. It is not a problem for regression algorithm while there is a limited amount of those leaps/falls, but if there is too many of them - algorithm just won't be able to interpret it correctly. Sometimes those records even can be lying (in other words, contain errors). That is the reason why they are called as outliers.
+
+For efficient regression removal of such elements is mandatory if regression is not working efficiently. To perform this operation there are Z-score and IQR-algorithm filtering methods. In the program is implemented the second algorithm.
+
+IQR algorithm works in the next steps:
+
+* Find vales of the first and the third quartiles (or 25-th and 75-th percentiles);
+* Find IQR: ```IQR = Q3 - Q1```;
+* The data is correct if ```(Q1 - (1.5 * IQR)) < answer < (Q3 + (1.5 * IQR))```
+
+So if the data is not matching this rule, then it is an outlier and must be removed from the system.
+
+```python
+#   choose if there is IQR outliers filtering required
+choice_of_outliers_filtering = input("Do you want to perform Outliers IQR filtering (y - yes, n - no)?\n>>>\t")
+if choice_of_outliers_filtering == "y":
+    Q1 = np.quantile(answers, 0.25)
+    Q3 = np.quantile(answers, 0.75)
+    IQR = iqr(answers)
+
+    non_outliers_indexes = []
+    for i in range(len(answers)):
+        if (Q1 - (1.5 * IQR)) < answers[i] < (Q3 + (1.5 * IQR)):
+            non_outliers_indexes.append(i)
+
+    clean_answers = []
+    clean_data = []
+    for index in non_outliers_indexes:
+        clean_answers.append(answers[index])
+        clean_data.append(data[index])
+
+    answers = clean_answers
+    data = clean_data
+```
+
+### Data expansion
+
+During the laboratory work was discovered that use of only provided data will not lead to the efficient regression, so there was provided to the user a choice between two segments of data for analysis: analyze all the data or just the part conform conditions of the laboratory work.
+
+
+```python
+#   read the data from file considering user's choice about how to make read (all the data or conform lab requirements)
+with open("apartment_db.txt") as file_db:
+    if choice_about_analyzable_data == 'n':
+        for line in file_db:
+            row = line.split(",")
+            current_row_usable_data = [
+                float(row[COMPLEX_AGE_INDEX]),
+                float(row[TOTAL_ROOMS_INDEX]),
+                float(row[TOTAL_BEDROOMS_INDEX]),
+                float(row[COMPLEX_INHABITANTS_INDEX]),
+                float(row[APARTMENTS_NR_INDEX]),
+                float(row[MEDIAN_COMPLEX_VALUE_INDEX])
+            ]
+            primary_data_from_file.append(current_row_usable_data)
+
+    elif choice_about_analyzable_data == 'y':
+        for line in file_db:
+            row = line.split(",")
+            current_row_usable_data = [
+                float(row[0]),
+                float(row[1]),
+                float(row[COMPLEX_AGE_INDEX]),
+                float(row[TOTAL_ROOMS_INDEX]),
+                float(row[TOTAL_BEDROOMS_INDEX]),
+                float(row[COMPLEX_INHABITANTS_INDEX]),
+                float(row[APARTMENTS_NR_INDEX]),
+                float(row[7]),
+                float(row[MEDIAN_COMPLEX_VALUE_INDEX])
+            ]
+            primary_data_from_file.append(current_row_usable_data)
+```
+
+### Medium error
+
+Just finding medium error between original data and predicted conform regression answers by formula: ```medium_error = sum(answers[i] - answers_predicted[i])/n```, where ```i``` is index coming from 0 to ```n```, where ```n``` is amount of records.
+
+```python
+#   calculate medium error
+medium_error = 0
+for i in range(representable_plot_size):
+    medium_error += abs(answers[i] - answers_predicted[i])
+medium_error /= representable_plot_size
+```
+
+### Polynomial Regression of n-th degree
+
+After all preparations the data is called by the same principle as in previous regression examples:
+
+```python
+#   init polynomial features object
+transformer = PolynomialFeatures(degree=int(polynomial_degree), include_bias=True)
+
+#   fit input for polynomial analysis
+transformer.fit(data)
+
+#   polynomial variables values generation out of input
+polynomial_data = transformer.transform(data)
+
+#   fit data with answers to the LinearRegression module for analysis
+model = LinearRegression().fit(polynomial_data, answers)
+
+#   try to analyze data and get scores
+r_sq = model.score(polynomial_data, answers)
+```
+
+The only moment worth mentioning is that ```include_bias``` adds one more column to the original data set filled with ones. This can improve regression results in some cases.
